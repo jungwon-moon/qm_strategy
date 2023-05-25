@@ -32,11 +32,13 @@ class Kiwoom(QAxWidget):
         self.account_mystock_loop = QEventLoop()
         self.not_concluded_account_loop = QEventLoop()
         self.day_kiwoom_db_loop = QEventLoop()
+        self.minute_candle_loop = QEventLoop()
 
         ### Return Variable ###
         self.login_code = None
         self.acc_stock_dict = {}
         self.portfolio_stock_dict = {}
+        self.read_stcd()        # 종목 불러오기
 
         ### Slot(Handle) ###
         self.OnEventConnect.connect(self.login_slot)
@@ -52,9 +54,32 @@ class Kiwoom(QAxWidget):
 
         ### ###
         # self.calculator_fnc()     # 의미없는 종목일봉 가져와서 계산..
-        self.read_stcd()        # 종목 불러오기
+        self.show_minute_candle()
+        # self.minute_candle()
         self.screen_number_setting()        # 스크린 번호 할당
+
+        ### real Data ###
+        # self.real_chejan_event()
+        # self.real_price_event()
         ####################
+
+    def real_price_event(self):
+        for stcd in self.portfolio_stock_dict.keys():
+            screen_num = self.portfolio_stock_dict[stcd]["스크린번호"]
+            fids = self.real_type.REALTYPE["주식체결"]["현재가"]
+            self.dynamicCall("SetRealReg(str, str, str, str)",
+                             screen_num, stcd, fids, "1")
+            print(
+                f"real_price 실시간 등록 코드 {stcd} 스크린번호: {screen_num} fid: {fids}")
+
+    def real_chejan_event(self):
+        for stcd in self.portfolio_stock_dict.keys():
+            screen_num = self.portfolio_stock_dict[stcd]["스크린번호"]
+            fids = self.real_type.REALTYPE["주식체결"]["체결시간"]
+            self.dynamicCall("SetRealReg(str, str, str, str)",
+                             screen_num, stcd, fids, "1")
+            print(
+                f"real_chejan 실시간 등록 코드 {stcd} 스크린번호: {screen_num} fid: {fids}")
 
     def real_event_slots(self):
         self.OnReceiveRealData.connect(self.realdata_slot)
@@ -141,7 +166,15 @@ class Kiwoom(QAxWidget):
             print(data)
             self.day_kiwoom_db_loop.exit()
 
+        if sTrCode == "OPT10080":
+            data = self.dynamicCall(
+                "GetCommDataEx(str, str)", sTrCode, sRQName)
+            print(data)
+
+            self.minute_candle_loop.exit()
+
     def realdata_slot(self, sCode, sRealType, sRealData):
+        print(sRealType, sCode)
         if sRealType == "장시작시간":
             fid = self.real_type.REALTYPE[sRealType]["장운영구분"]
             value = self.dynamicCall("GetCommRealData(str, int)", sCode, fid)
@@ -154,6 +187,16 @@ class Kiwoom(QAxWidget):
                 print("장 시작")
             elif value == "4":
                 print("장 종료")
+
+        if sRealType == "주식체결":
+            fid = self.real_type.REALTYPE[sRealType]["현재가"]
+            value = self.dynamicCall("GetCommRealData(str, int)", sCode, fid)
+            print(f"{sCode} 현재가: {value}")
+
+        if sRealType == "현재가":
+            fid = self.real_type.REALTYPE[sRealType]["현재가"]
+            value = self.dynamicCall("GetCommRealData(str, int)", sCode, fid)
+            print(f"{sCode} 현재가: {value}")
 
     def get_account_info(self):
         self.server = self.dynamicCall("GetLoginInfo(str)", "GetServerGubun")
@@ -210,6 +253,14 @@ class Kiwoom(QAxWidget):
             self.dynamicCall("DisconnectRealData(QString)", self._screen_calc)
             print(f"{idx+1} / {len(stcd_list)} {code} is updating...")
             self.day_kiwoom_db(code=code)
+            # self.minute_candle(code=code)
+
+    def show_minute_candle(self):
+        print("show_minute_candle")
+        print(self.portfolio_stock_dict)
+        for stcd in self.portfolio_stock_dict.keys():
+            print(stcd)
+            self.minute_candle(code=stcd)
 
     def day_kiwoom_db(self, code=None, date=None, sPrevNext="0"):
 
@@ -224,10 +275,22 @@ class Kiwoom(QAxWidget):
         if sPrevNext == "0":
             self.day_kiwoom_db_loop.exec_()
 
+    def minute_candle(self, code=None, sPrevNext="0"):
+        QTest.qWait(500)
+        self.dynamicCall("SetInputValue(str, str)", "종목코드", code)
+        self.dynamicCall("SetInputValue(str, str)", "틱범위", "3")
+        self.dynamicCall("SetInputValue(str, str)", "수정주가구분", "1")
+        self.dynamicCall("CommRqData(str, str, int, str)",
+                         "주식일봉차트조회", "OPT10080", sPrevNext, self._screen_calc)
+        self.minute_candle_loop.exec_()
+
     def read_stcd(self):
         self.portfolio_stock_dict = {
             "005930": {"종목명": "삼성", "현재가": "60000"},
-            "001340": {"종목명": "몰루", "현재가": "60000"},
+            "001340": {"종목명": "몰루1", "현재가": "60000"},
+            "000660": {"종목명": "몰루2", "현재가": "60000"},
+            "001470": {"종목명": "몰루3", "현재가": "60000"},
+            "001790": {"종목명": "몰루4", "현재가": "60000"},
         }
 
     def screen_number_setting(self):
