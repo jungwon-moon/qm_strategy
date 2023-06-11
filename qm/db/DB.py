@@ -139,3 +139,22 @@ class POSTGRESCRUD(POSTGRES):
         except Exception as e:
             print("Upsert DB Error", e)
             return [False, e]
+
+    def multiUpsertDB(self, table, values, target, action='NOTHING', column=''):
+        '''
+        - action
+            - NOTHING
+            - UPDATE SET ({col1}, {col2}) = ({val1}, {val2})
+        '''
+        try:
+            records_list_template = ','.join(["%s"] * len(values))
+            query = f"""
+                INSERT INTO {table}{column} VALUES {records_list_template}
+                ON CONFLICT ({target}) DO {action}
+            """
+            self.cursor.execute(query)
+            self.db.commit()
+            return [True]
+        except Exception as e:
+            print("Upsert DB Error", e)
+            return [False, e]

@@ -12,6 +12,7 @@ class Kiwoom(QAxWidget, QM_ST_001, QM_ST_002):
     def __init__(self):
         super().__init__()
         # #
+        self.real_type = RealType()
         self.db = postgres_connect()
         [self.user_pw, self.user_account] = kiwoom_info.values()
         # #
