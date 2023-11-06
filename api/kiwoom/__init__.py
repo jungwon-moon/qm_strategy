@@ -4,10 +4,10 @@ from PyQt5.QtTest import QTest
 from api.kiwoom.errors import login_error
 from api.kiwoom.type import RealType
 from qm.connect import postgres_connect, kiwoom_info
-from qm_strategy import QM_ST_001, QM_ST_002
+from qm_strategy import QM_ST_001, QM_ST_002_TRADE
 
 
-class Kiwoom(QAxWidget, QM_ST_001, QM_ST_002):
+class Kiwoom(QAxWidget, QM_ST_001, QM_ST_002_TRADE):
 
     def __init__(self):
         super().__init__()

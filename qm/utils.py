@@ -86,5 +86,8 @@ def change_date(dt, type, num):
     elif type == "days":
         date = dt2str(str2dt(dt) + relativedelta(days=num))
     while (not check_trading_day(date)):
-        date = dt2str(str2dt(date) + relativedelta(days=1))
+        if type == "days" and num < 0:
+            date = dt2str(str2dt(date) - relativedelta(days=1))
+        else:
+            date = dt2str(str2dt(date) + relativedelta(days=1))
     return date
