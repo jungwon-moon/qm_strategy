@@ -22,6 +22,13 @@ def str2dt(td: str) -> datetime.datetime:
     return datetime.datetime.strptime(td, "%Y%m%d")
 
 
+def ts2dt(td: str) -> datetime.datetime:
+    r"""
+    timestamp -> datetime
+    """
+    return datetime.datetime.fromtimestamp(td)
+
+
 _today = dt2str(datetime.datetime.today(), Type="day")
 _time = dt2str(datetime.datetime.today(), Type="time")
 
