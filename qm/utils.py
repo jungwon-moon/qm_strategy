@@ -1,4 +1,5 @@
 import requests
+import time
 import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -27,6 +28,13 @@ def ts2dt(td: str) -> datetime.datetime:
     timestamp -> datetime
     """
     return datetime.datetime.fromtimestamp(td)
+
+
+def str2ts(td: str):
+    r"""
+    str(datetime) -> timestamp
+    """
+    return int(time.mktime(datetime.datetime.strptime(td, '%Y-%m-%d %H:%M:%S').timetuple()))
 
 
 _today = dt2str(datetime.datetime.today(), Type="day")
